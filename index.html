@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101916">
+  <title>Fieldnotes — Backtest Journal</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101916;
+      --panel: #18221e;
+      --panel-raised: #1d2924;
+      --line: #2e3b35;
+      --text: #e8eee9;
+      --muted: #9aa99f;
+      --accent: #c3ed8b;
+      --accent-ink: #17220f;
+      --input: #121b17;
+      --danger: #ffc1af;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(ellipse at 87% 0%, #23332a 0, transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .shell { max-width: 1440px; margin: 0 auto; padding: 38px 34px 64px; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 11px; color: var(--muted); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+    .brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid #53634e; border-radius: 9px; color: var(--accent); font-size: 17px; }
+    .private-note { color: var(--muted); font-size: 12px; }
+    .private-note::before { content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 8px 1px 0; border-radius: 50%; background: var(--accent); }
+
+    header { margin: 40px 0 27px; }
+    .eyebrow { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 10px 0 8px; font-size: clamp(30px, 4vw, 44px); font-weight: 580; letter-spacing: -.045em; }
+    header p { margin: 0; color: var(--muted); line-height: 1.6; }
+
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 14px; }
+    .section-heading h2 { margin: 0; font-size: 16px; font-weight: 600; }
+    .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--panel) 94%, transparent); }
+    .session-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 20px; border-bottom: 1px solid var(--line); }
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field label, .notes-field label { color: #b6c1b9; font-size: 11px; font-weight: 650; letter-spacing: .035em; }
+    .field small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+    input, select, textarea {
+      width: 100%;
+      min-height: 39px;
+      padding: 9px 11px;
+      border: 1px solid #35443c;
+      border-radius: 7px;
+      outline: none;
+      background: var(--input);
+      color: var(--text);
+    }
+    input:focus, select:focus, textarea:focus { border-color: #9dc878; box-shadow: 0 0 0 2px #c3ed8b20; }
+    input::placeholder, textarea::placeholder { color: #718077; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; min-width: 1130px; border-collapse: collapse; }
+    th { padding: 12px 9px; background: #141d19; color: #96a69b; font-size: 10px; font-weight: 650; letter-spacing: .06em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 10px 7px; border-top: 1px solid #28352e; }
+    th:first-child, td:first-child { padding-left: 18px; }
+    th:last-child, td:last-child { padding-right: 18px; }
+    td select { min-width: 100px; min-height: 36px; padding: 7px 8px; font-size: 12px; }
+    td .short-select { min-width: 75px; }
+    .timeframe { min-width: 75px; font-weight: 650; }
+    .timeframe small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+    .entry-row { background: #202c24; }
+    .entry-row td:first-child { box-shadow: inset 3px 0 var(--accent); }
+    select:disabled { opacity: .46; cursor: not-allowed; }
+
+    .notes-field { display: flex; flex-direction: column; gap: 7px; padding: 17px 20px 19px; }
+    textarea { min-height: 74px; resize: vertical; }
+    .form-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 0 20px 20px; }
+    .hint { color: var(--muted); font-size: 11px; }
+    .button { min-height: 38px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-raised); color: var(--text); font-weight: 600; }
+    .button:hover { border-color: #65796b; }
+    .button.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+    .button.primary:hover { background: #d3f5a8; }
+    .button.danger { color: var(--danger); }
+
+    .history { margin-top: 38px; }
+    .analytics { margin-top: 38px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .metric-card { padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .metric-label { color: var(--muted); font-size: 11px; }
+    .metric-value { margin-top: 8px; font-size: 25px; font-weight: 650; letter-spacing: -.035em; }
+    .metric-detail { margin-top: 5px; color: var(--muted); font-size: 11px; }
+    .analytics-panel { margin-top: 14px; }
+    .analytics-table { min-width: 600px; }
+    .analytics-table td { padding: 12px 10px; }
+    .analytics-table th:first-child, .analytics-table td:first-child { padding-left: 18px; }
+    .analytics-empty { color: var(--muted); text-align: center; }
+    .history-count { padding: 4px 8px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); font-size: 11px; }
+    .history-actions { display: flex; align-items: center; gap: 9px; }
+    .history-list { display: grid; gap: 10px; }
+    .history-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 17px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .card-main { min-width: 0; }
+    .card-title { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; font-weight: 650; }
+    .card-date, .card-meta { color: var(--muted); font-size: 11px; }
+    .card-meta { margin-top: 6px; }
+    .entry-pill { padding: 3px 7px; border-radius: 20px; background: #31432c; color: var(--accent); font-size: 10px; font-weight: 700; }
+    .empty { padding: 30px 20px; color: var(--muted); text-align: center; }
+    .empty strong { display: block; margin-bottom: 5px; color: var(--text); font-weight: 600; }
+    .toast { position: fixed; right: 24px; bottom: 22px; padding: 12px 16px; transform: translateY(12px); border: 1px solid #587044; border-radius: 8px; background: #253522; color: var(--text); opacity: 0; pointer-events: none; transition: .2s ease; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 680px) {
+      .shell { padding: 24px 16px 42px; }
+      header { margin: 32px 0 22px; }
+      .private-note { max-width: 125px; text-align: right; line-height: 1.45; }
+      .session-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px; }
+      .form-footer { align-items: flex-start; flex-direction: column; padding: 0 16px 16px; }
+      .form-footer .button { width: 100%; }
+      .notes-field { padding: 15px 16px; }
+      .section-heading { align-items: flex-start; }
+      .history-actions .button { padding: 8px; }
+      .history-card { align-items: flex-start; }
+      .metric-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 420px) {
+      .session-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topline">
+      <div class="brand"><span class="brand-mark">↗</span> Fieldnotes / Trading journal</div>
+      <div class="private-note">Saved only in this browser</div>
+    </div>
+
+    <header>
+      <div class="eyebrow">Backtest workspace</div>
+      <h1>Review the setup.</h1>
+      <p>A quiet place to log what price did, timeframe by timeframe.</p>
+    </header>
+
+    <section aria-labelledby="new-entry-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="new-entry-title">New backtest entry</h2>
+          <p>Mark the timeframes that informed the setup and where you entered.</p>
+        </div>
+      </div>
+      <form class="panel" id="journal-form">
+        <div class="session-fields">
+          <div class="field">
+            <label for="market">Market / symbol</label>
+            <input id="market" name="market" placeholder="e.g. EUR/USD, ES, BTC/USD" required>
+          </div>
+          <div class="field">
+            <label for="date">Backtest date</label>
+            <input id="date" name="date" type="date" required>
+          </div>
+          <div class="field">
+            <label for="result">Outcome (optional)</label>
+            <select id="result" name="result">
+              <option value="">Not recorded</option>
+              <option>Win</option>
+              <option>Loss</option>
+              <option>Breakeven</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="r-multiple">R:R result (R multiple)</label>
+            <input id="r-multiple" name="rMultiple" type="number" min="-100" max="100" step="0.1" placeholder="e.g. 2 or -1">
+            <small>Enter +2 for a 2R win, -1 for a 1R loss.</small>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Timeframe</th>
+                <th>Direction</th>
+                <th>Phase</th>
+                <th>Swept liquidity</th>
+                <th>Liquidity type</th>
+                <th>Closed back inside<br>candle range</th>
+                <th>Key level hit</th>
+                <th>Key-level type</th>
+                <th>Structure aligned</th>
+                <th>Entered here</th>
+              </tr>
+            </thead>
+            <tbody id="timeframe-rows"></tbody>
+          </table>
+        </div>
+
+        <div class="notes-field">
+          <label for="notes">Notes (optional)</label>
+          <textarea id="notes" name="notes" placeholder="What did you notice?"></textarea>
+        </div>
+        <div class="form-footer">
+          <div class="hint">A backtest journal only — no live orders or broker connection.</div>
+          <button class="button primary" type="submit">Save backtest</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="analytics" aria-labelledby="analytics-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="analytics-title">Backtest analytics</h2>
+          <p>Metrics use entries with recorded R:R. Breakeven and unrecorded results break a streak.</p>
+        </div>
+      </div>
+      <div class="metric-grid" id="metric-grid" aria-live="polite"></div>
+      <div class="section-heading">
+        <div>
+          <h2>R:R outcome breakdown</h2>
+          <p>Frequency counts backtests in each outcome; average is the mean R multiple for that group.</p>
+        </div>
+      </div>
+      <div class="panel analytics-panel table-wrap">
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Outcome</th>
+              <th>Frequency</th>
+              <th>Average R:R</th>
+            </tr>
+          </thead>
+          <tbody id="outcome-analytics"></tbody>
+        </table>
+      </div>
+      <div class="section-heading">
+        <div>
+          <h2>Key-level comparison</h2>
+          <p>Counts unique backtests where that level was hit. Average R is based on those with a recorded R:R.</p>
+        </div>
+      </div>
+      <div class="panel analytics-panel table-wrap">
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Key level used</th>
+              <th>Frequency</th>
+              <th>Share of backtests</th>
+              <th>Average R:R</th>
+              <th>R:R sample size</th>
+            </tr>
+          </thead>
+          <tbody id="level-analytics"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="history" aria-labelledby="history-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="history-title">Past backtests</h2>
+          <p>Your saved entries on this device.</p>
+        </div>
+        <div class="history-actions">
+          <span class="history-count" id="entry-count">0 entries</span>
+          <button class="button" id="export-button" type="button">Export CSV</button>
+        </div>
+      </div>
+      <div class="history-list panel" id="history-list"></div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "fieldnotes-backtests-v1";
+      const timeframes = ["Weekly", "Daily", "4H", "1H", "15M"];
+      const entryTimeframes = new Set(["1H", "15M"]);
+      const columns = [
+        { key: "direction", label: "Direction", options: ["Neutral", "Bullish", "Bearish"] },
+        { key: "phase", label: "Phase", options: ["Continuation After Breakout", "Reversal", "Range", "Other"] },
+        { key: "swept", label: "Swept liquidity", options: ["—", "Yes", "No"] },
+        { key: "liquidityType", label: "Liquidity type", options: ["—", "BSL", "SSL", "Equal highs", "Equal lows", "Other"] },
+        { key: "closedInside", label: "Closed back inside the candle range", options: ["—", "Yes", "No"] },
+        { key: "keyLevelHit", label: "Key level hit", options: ["—", "Yes", "No"] },
+        { key: "keyLevelType", label: "Key-level type", options: ["Other", "—", "Support / resistance", "High / low", "Order block", "Fair value gap"] },
+        { key: "structureAligned", label: "Structure aligned", options: ["—", "Yes", "No"] },
+        { key: "entered", label: "Entered here", options: ["—", "Off", "On"] }
+      ];
+      const rows = document.querySelector("#timeframe-rows");
+      const form = document.querySelector("#journal-form");
+      const historyList = document.querySelector("#history-list");
+      const metricGrid = document.querySelector("#metric-grid");
+      const outcomeAnalytics = document.querySelector("#outcome-analytics");
+      const levelAnalytics = document.querySelector("#level-analytics");
+      const toast = document.querySelector("#toast");
+
+      function makeSelect(timeframe, column) {
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", `${timeframe}: ${column.label}`);
+        select.dataset.field = column.key;
+        if (column.key === "entered" && !entryTimeframes.has(timeframe)) select.disabled = true;
+        column.options.forEach((value) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          select.append(option);
+        });
+        if (column.key === "direction") select.value = "Neutral";
+        if (column.key === "phase") select.value = "Continuation After Breakout";
+        if (column.key === "keyLevelType") select.value = "Other";
+        if (column.key === "entered") select.value = entryTimeframes.has(timeframe) ? (timeframe === "1H" ? "Off" : "On") : "—";
+        if (["swept", "liquidityType", "closedInside", "keyLevelHit", "structureAligned"].includes(column.key)) select.value = "—";
+        return select;
+      }
+
+      timeframes.forEach((timeframe) => {
+        const row = document.createElement("tr");
+        if (entryTimeframes.has(timeframe)) row.className = "entry-row";
+        const timeframeCell = document.createElement("td");
+        timeframeCell.className = "timeframe";
+        timeframeCell.textContent = timeframe;
+        if (entryTimeframes.has(timeframe)) {
+          const marker = document.createElement("small");
+          marker.textContent = "Entry";
+          timeframeCell.append(marker);
+        }
+        row.append(timeframeCell);
+        columns.forEach((column) => {
+          const cell = document.createElement("td");
+          const select = makeSelect(timeframe, column);
+          if (["swept", "closedInside", "keyLevelHit", "structureAligned", "entered"].includes(column.key)) select.classList.add("short-select");
+          cell.append(select);
+          row.append(cell);
+        });
+        rows.append(row);
+      });
+
+      function readEntries() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === null) return [];
+        const entries = JSON.parse(saved);
+        if (!Array.isArray(entries)) throw new Error("Saved backtest data is not a list.");
+        return entries;
+      }
+
+      function saveEntries(entries) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+          return true;
+        } catch (error) {
+          console.error("Could not save backtest entries.", error);
+          showToast("Could not save. Check browser storage settings.");
+          return false;
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[character]);
+      }
+
+      function getRecordedR(entry) {
+        if (entry.rMultiple === null || entry.rMultiple === undefined || entry.rMultiple === "") return null;
+        const value = Number(entry.rMultiple);
+        return Number.isFinite(value) ? value : null;
+      }
+
+      function formatR(value) {
+        if (value === null || value === undefined) return "—";
+        const prefix = value > 0 ? "+" : "";
+        return `${prefix}${Number(value.toFixed(2))}R`;
+      }
+
+      function renderAnalytics(entries) {
+        const recorded = entries.map((entry) => ({ entry, r: getRecordedR(entry) })).filter((item) => item.r !== null);
+        const totalR = recorded.reduce((sum, item) => sum + item.r, 0);
+        const averageR = recorded.length ? totalR / recorded.length : null;
+        const wins = recorded.filter((item) => item.r > 0).length;
+        const losses = recorded.filter((item) => item.r < 0).length;
+        const breakeven = recorded.length - wins - losses;
+        const winRate = recorded.length ? (wins / recorded.length) * 100 : null;
+        const grossProfit = recorded.reduce((sum, item) => sum + Math.max(item.r, 0), 0);
+        const grossLoss = recorded.reduce((sum, item) => sum + Math.abs(Math.min(item.r, 0)), 0);
+        const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : (grossProfit > 0 ? "∞" : "—");
+
+        const chronological = [...entries]
+          .filter((entry) => getRecordedR(entry) !== null)
+          .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+        let currentSign = 0;
+        let currentLength = 0;
+        let longestWin = 0;
+        let longestLoss = 0;
+        chronological.forEach((entry) => {
+          const r = getRecordedR(entry);
+          const sign = Math.sign(r);
+          if (sign === 0) {
+            currentSign = 0;
+            currentLength = 0;
+          } else if (sign === currentSign) {
+            currentLength += 1;
+          } else {
+            currentSign = sign;
+            currentLength = 1;
+          }
+          if (sign > 0) longestWin = Math.max(longestWin, currentLength);
+          if (sign < 0) longestLoss = Math.max(longestLoss, currentLength);
+        });
+        const currentStreak = currentSign === 0 ? "—" : `${currentLength} ${currentSign > 0 ? (currentLength === 1 ? "win" : "wins") : (currentLength === 1 ? "loss" : "losses")}`;
+
+        const metrics = [
+          { label: "Backtests logged", value: entries.length, detail: "Total saved setups" },
+          { label: "Win frequency", value: winRate === null ? "—" : `${winRate.toFixed(1)}%`, detail: `${wins} wins out of ${recorded.length} with R:R · ${losses} losses · ${breakeven} breakeven` },
+          { label: "Average R:R", value: formatR(averageR), detail: `${recorded.length} backtests with a recorded R multiple` },
+          { label: "Profit factor", value: profitFactor, detail: `${formatR(grossProfit)} gross profit ÷ ${formatR(-grossLoss)} gross loss` },
+          { label: "Current streak", value: currentStreak, detail: "By backtest date; breakeven breaks the streak" },
+          { label: "Longest streak", value: `${longestWin}W / ${longestLoss}L`, detail: "Longest consecutive wins / losses by date" }
+        ];
+        metricGrid.replaceChildren();
+        metrics.forEach((metric) => {
+          const card = document.createElement("article");
+          card.className = "metric-card";
+          card.innerHTML = `<div class="metric-label">${escapeHtml(metric.label)}</div><div class="metric-value">${escapeHtml(metric.value)}</div><div class="metric-detail">${escapeHtml(metric.detail)}</div>`;
+          metricGrid.append(card);
+        });
+
+        const outcomeGroups = [
+          { label: "Win (> 0R)", values: recorded.filter((item) => item.r > 0).map((item) => item.r) },
+          { label: "Breakeven (0R)", values: recorded.filter((item) => item.r === 0).map((item) => item.r) },
+          { label: "Loss (< 0R)", values: recorded.filter((item) => item.r < 0).map((item) => item.r) }
+        ];
+        outcomeAnalytics.replaceChildren();
+        outcomeGroups.forEach((group) => {
+          const average = group.values.length ? group.values.reduce((sum, value) => sum + value, 0) / group.values.length : null;
+          const row = document.createElement("tr");
+          [group.label, group.values.length, formatR(average)].forEach((value) => {
+            const cell = document.createElement("td");
+            cell.textContent = String(value);
+            row.append(cell);
+          });
+          outcomeAnalytics.append(row);
+        });
+
+        const levels = new Map();
+        entries.forEach((entry) => {
+          const hitLevels = new Set((Array.isArray(entry.timeframes) ? entry.timeframes : [])
+            .filter((timeframe) => timeframe.keyLevelHit === "Yes" && timeframe.keyLevelType && timeframe.keyLevelType !== "—")
+            .map((timeframe) => timeframe.keyLevelType));
+          hitLevels.forEach((level) => {
+            if (!levels.has(level)) levels.set(level, []);
+            levels.get(level).push(getRecordedR(entry));
+          });
+        });
+
+        levelAnalytics.replaceChildren();
+        const sortedLevels = [...levels.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+        if (!sortedLevels.length) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.className = "analytics-empty";
+          cell.colSpan = 5;
+          cell.textContent = "No key levels marked as hit yet.";
+          row.append(cell);
+          levelAnalytics.append(row);
+          return;
+        }
+        sortedLevels.forEach(([level, results]) => {
+          const withR = results.filter((value) => value !== null);
+          const average = withR.length ? withR.reduce((sum, value) => sum + value, 0) / withR.length : null;
+          const row = document.createElement("tr");
+          [level, results.length, entries.length ? `${((results.length / entries.length) * 100).toFixed(1)}%` : "—", formatR(average), withR.length].forEach((value) => {
+            const cell = document.createElement("td");
+            cell.textContent = String(value);
+            row.append(cell);
+          });
+          levelAnalytics.append(row);
+        });
+      }
+
+      function renderHistory() {
+        let entries;
+        try {
+          entries = readEntries().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        } catch (error) {
+          console.error("Could not read saved backtests.", error);
+          document.querySelector("#entry-count").textContent = "Unavailable";
+          historyList.replaceChildren();
+          const failure = document.createElement("div");
+          failure.className = "empty";
+          failure.setAttribute("role", "alert");
+          failure.textContent = "Could not read saved entries. Browser storage may be unavailable or the saved data may be invalid.";
+          historyList.append(failure);
+          renderAnalytics([]);
+          return;
+        }
+        document.querySelector("#entry-count").textContent = `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
+        renderAnalytics(entries);
+        historyList.replaceChildren();
+        if (!entries.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.innerHTML = "<strong>No backtests logged yet</strong>Save your first setup and it will appear here.";
+          historyList.append(empty);
+          return;
+        }
+        entries.forEach((entry) => {
+          const card = document.createElement("article");
+          card.className = "history-card";
+          const entered = entry.timeframes.filter((item) => item.entered === "On").map((item) => item.timeframe);
+          const outcome = `${entry.result ? ` · ${escapeHtml(entry.result)}` : ""}${getRecordedR(entry) === null ? "" : ` · ${escapeHtml(formatR(getRecordedR(entry)))}`}`;
+          card.innerHTML = `
+            <div class="card-main">
+              <div class="card-title">${escapeHtml(entry.market)} <span class="card-date">${escapeHtml(entry.date)}${outcome}</span>
+                ${entered.map((timeframe) => `<span class="entry-pill">${escapeHtml(timeframe)} entry</span>`).join("")}
+              </div>
+              <div class="card-meta">${entry.timeframes.map((item) => `${escapeHtml(item.timeframe)}: ${escapeHtml(item.direction)}`).join(" · ")}${entry.notes ? ` · ${escapeHtml(entry.notes)}` : ""}</div>
+            </div>
+            <button class="button danger" type="button" data-delete="${escapeHtml(entry.id)}" aria-label="Delete ${escapeHtml(entry.market)} backtest">Delete</button>`;
+          historyList.append(card);
+        });
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(() => toast.classList.remove("show"), 2600);
+      }
+
+      function todayLocal() {
+        const now = new Date();
+        const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+        return localDate.toISOString().slice(0, 10);
+      }
+
+      function collectTimeframes() {
+        return [...rows.querySelectorAll("tr")].map((row, index) => {
+          const values = {};
+          row.querySelectorAll("select").forEach((select) => { values[select.dataset.field] = select.value; });
+          return { timeframe: timeframes[index], ...values };
+        });
+      }
+
+      document.querySelector("#date").value = todayLocal();
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const entry = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          market: form.elements.market.value.trim(),
+          date: form.elements.date.value,
+          result: form.elements.result.value,
+          rMultiple: form.elements.rMultiple.value === "" ? null : Number(form.elements.rMultiple.value),
+          notes: form.elements.notes.value.trim(),
+          createdAt: new Date().toISOString(),
+          timeframes: collectTimeframes()
+        };
+        if (!entry.market) {
+          form.elements.market.focus();
+          return;
+        }
+        let entries;
+        try {
+          entries = readEntries();
+        } catch (error) {
+          console.error("Could not read saved backtests.", error);
+          showToast("Could not read saved entries. Check browser storage.");
+          return;
+        }
+        if (saveEntries([entry, ...entries])) {
+          renderHistory();
+          showToast("Backtest saved on this device.");
+          form.reset();
+          document.querySelector("#date").value = todayLocal();
+          rows.querySelectorAll("tr").forEach((row, index) => {
+            const timeframe = timeframes[index];
+            columns.forEach((column) => {
+              const select = row.querySelector(`[data-field="${column.key}"]`);
+              if (!select) return;
+              if (column.key === "direction") select.value = "Neutral";
+              else if (column.key === "phase") select.value = "Continuation After Breakout";
+              else if (column.key === "keyLevelType") select.value = "Other";
+              else if (column.key === "entered") select.value = entryTimeframes.has(timeframe) ? (timeframe === "1H" ? "Off" : "On") : "—";
+              else select.value = "—";
+            });
+          });
+        }
+      });
+
+      historyList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-delete]");
+        if (!button) return;
+        let entries;
+        try {
+          entries = readEntries().filter((entry) => entry.id !== button.dataset.delete);
+        } catch (error) {
+          console.error("Could not read saved backtests.", error);
+          showToast("Could not read saved entries. Check browser storage.");
+          return;
+        }
+        if (saveEntries(entries)) {
+          renderHistory();
+          showToast("Backtest deleted.");
+        }
+      });
+
+      document.querySelector("#export-button").addEventListener("click", () => {
+        let entries;
+        try {
+          entries = readEntries();
+        } catch (error) {
+          console.error("Could not read saved backtests.", error);
+          showToast("Could not read saved entries. Check browser storage.");
+          return;
+        }
+        if (!entries.length) {
+          showToast("Save a backtest before exporting.");
+          return;
+        }
+        const headers = ["Market", "Date", "Outcome", "R:R result (R multiple)", "Notes", ...timeframes.flatMap((timeframe) => columns.map((column) => `${timeframe} ${column.label}`))];
+        const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+        const lines = [headers, ...entries.map((entry) => [
+          entry.market, entry.date, entry.result, entry.rMultiple ?? "", entry.notes,
+          ...entry.timeframes.flatMap((timeframe) => columns.map((column) => timeframe[column.key]))
+        ])].map((line) => line.map(quote).join(","));
+        const blob = new Blob(["\uFEFF", lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "backtest-journal.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>
