@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101916">
-  <title>Fieldnotes — Backtest Journal</title>
+  <title>CRT Strategy Journal</title>
   <style>
     :root {
       color-scheme: dark;
@@ -53,6 +53,13 @@
     .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
     .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--panel) 94%, transparent); }
     .session-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 20px; border-bottom: 1px solid var(--line); }
+    .context-section { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+    .context-heading { margin: 0 0 12px; color: #b6c1b9; font-size: 11px; font-weight: 650; letter-spacing: .035em; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .comparison-card { padding: 13px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-raised); }
+    .comparison-card h3 { margin: 0 0 11px; color: var(--text); font-size: 12px; font-weight: 650; }
+    .comparison-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .comparison-card[hidden] { display: none; }
     .field { display: flex; flex-direction: column; gap: 7px; }
     .field label, .notes-field label { color: #b6c1b9; font-size: 11px; font-weight: 650; letter-spacing: .035em; }
     .field small { color: var(--muted); font-size: 10px; line-height: 1.4; }
@@ -75,12 +82,6 @@
     td { padding: 10px 7px; border-top: 1px solid #28352e; }
     th:first-child, td:first-child { padding-left: 18px; }
     th:last-child, td:last-child { padding-right: 18px; }
-    td select { min-width: 100px; min-height: 36px; padding: 7px 8px; font-size: 12px; }
-    td .short-select { min-width: 75px; }
-    .timeframe { min-width: 75px; font-weight: 650; }
-    .timeframe small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
-    .entry-row { background: #202c24; }
-    .entry-row td:first-child { box-shadow: inset 3px 0 var(--accent); }
     select:disabled { opacity: .46; cursor: not-allowed; }
 
     .notes-field { display: flex; flex-direction: column; gap: 7px; padding: 17px 20px 19px; }
@@ -95,7 +96,7 @@
 
     .history { margin-top: 38px; }
     .analytics { margin-top: 38px; }
-    .metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
     .metric-card { padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
     .metric-label { color: var(--muted); font-size: 11px; }
     .metric-value { margin-top: 8px; font-size: 25px; font-weight: 650; letter-spacing: -.035em; }
@@ -104,7 +105,6 @@
     .analytics-table { min-width: 600px; }
     .analytics-table td { padding: 12px 10px; }
     .analytics-table th:first-child, .analytics-table td:first-child { padding-left: 18px; }
-    .analytics-empty { color: var(--muted); text-align: center; }
     .history-count { padding: 4px 8px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); font-size: 11px; }
     .history-actions { display: flex; align-items: center; gap: 9px; }
     .history-list { display: grid; gap: 10px; }
@@ -124,6 +124,8 @@
       header { margin: 32px 0 22px; }
       .private-note { max-width: 125px; text-align: right; line-height: 1.45; }
       .session-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px; }
+      .context-section { padding: 15px 16px; }
+      .comparison-grid { grid-template-columns: 1fr; }
       .form-footer { align-items: flex-start; flex-direction: column; padding: 0 16px 16px; }
       .form-footer .button { width: 100%; }
       .notes-field { padding: 15px 16px; }
@@ -141,21 +143,21 @@
 <body>
   <main class="shell">
     <div class="topline">
-      <div class="brand"><span class="brand-mark">↗</span> Fieldnotes / Trading journal</div>
+      <div class="brand"><span class="brand-mark">↗</span> CRT strategy journal</div>
       <div class="private-note">Saved only in this browser</div>
     </div>
 
     <header>
-      <div class="eyebrow">Backtest workspace</div>
-      <h1>Review the setup.</h1>
-      <p>A quiet place to log what price did, timeframe by timeframe.</p>
+      <div class="eyebrow">Strategy data collection</div>
+      <h1>Review the CRT setup.</h1>
+      <p>Record the setup, outcome, liquidity, and how it aligns with higher-timeframe CRT and structure.</p>
     </header>
 
     <section aria-labelledby="new-entry-title">
       <div class="section-heading">
         <div>
-          <h2 id="new-entry-title">New backtest entry</h2>
-          <p>Mark the timeframes that informed the setup and where you entered.</p>
+          <h2 id="new-entry-title">New strategy entry</h2>
+          <p>Log a selected 4H or Daily CRT setup, including a missed entry.</p>
         </div>
       </div>
       <form class="panel" id="journal-form">
@@ -165,43 +167,119 @@
             <input id="market" name="market" placeholder="e.g. EUR/USD, ES, BTC/USD" required>
           </div>
           <div class="field">
-            <label for="date">Backtest date</label>
+            <label for="date">Setup date</label>
             <input id="date" name="date" type="date" required>
           </div>
           <div class="field">
-            <label for="result">Outcome (optional)</label>
-            <select id="result" name="result">
-              <option value="">Not recorded</option>
-              <option>Win</option>
-              <option>Loss</option>
-              <option>Breakeven</option>
+            <label for="setup-timeframe">Setup CRT timeframe</label>
+            <select id="setup-timeframe" name="setupTimeframe" required>
+              <option value="4H">4H</option>
+              <option value="Daily">Daily</option>
             </select>
           </div>
           <div class="field">
-            <label for="r-multiple">R:R result (R multiple)</label>
-            <input id="r-multiple" name="rMultiple" type="number" min="-100" max="100" step="0.1" placeholder="e.g. 2 or -1">
-            <small>Enter +2 for a 2R win, -1 for a 1R loss.</small>
+            <label for="direction">Setup direction</label>
+            <select id="direction" name="direction" required>
+              <option value="">Choose direction</option>
+              <option value="Bullish">Bullish</option>
+              <option value="Bearish">Bearish</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="entry-status">Entry status</label>
+            <select id="entry-status" name="entryStatus" required>
+              <option value="Taken">Taken</option>
+              <option value="Missed">Missed — previously selected</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="result">Outcome</label>
+            <select id="result" name="result">
+              <option value="">Not recorded</option>
+              <option value="Win">Win</option>
+              <option value="Loss">Loss</option>
+            </select>
+            <small id="outcome-hint">For a missed entry, outcome is not applicable.</small>
+          </div>
+          <div class="field">
+            <label for="candle-close">Second candle closes</label>
+            <select id="candle-close" name="candleClose" required>
+              <option value="">Choose close</option>
+              <option value="Green">Green</option>
+              <option value="Red">Red</option>
+              <option value="Doji">Doji</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="target-behavior">Target behavior</label>
+            <select id="target-behavior" name="targetBehavior" required>
+              <option value="">Choose behavior</option>
+              <option value="Met">Target met</option>
+              <option value="Almost — body">Almost met — body</option>
+              <option value="Almost — wick">Almost met — wick</option>
+              <option value="Not met">Target not met</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="liquidity-taken">Liquidity taken?</label>
+            <select id="liquidity-taken" name="liquidityTaken" required>
+              <option value="">Choose yes or no</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="reaction-level">Liquidity / level reacted from</label>
+            <input id="reaction-level" name="reactionLevel" placeholder="e.g. prior-day low, equal highs">
           </div>
         </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Timeframe</th>
-                <th>Direction</th>
-                <th>Phase</th>
-                <th>Swept liquidity</th>
-                <th>Liquidity type</th>
-                <th>Closed back inside<br>candle range</th>
-                <th>Key level hit</th>
-                <th>Key-level type</th>
-                <th>Structure aligned</th>
-                <th>Entered here</th>
-              </tr>
-            </thead>
-            <tbody id="timeframe-rows"></tbody>
-          </table>
+        <div class="context-section">
+          <h3 class="context-heading">Was the setup against higher-timeframe context?</h3>
+          <div class="comparison-grid">
+            <div class="comparison-card" id="daily-context">
+              <h3>Daily context <span id="daily-context-note">(for 4H setups)</span></h3>
+              <div class="comparison-fields">
+                <div class="field">
+                  <label for="against-daily-crt">Against Daily CRT?</label>
+                  <select id="against-daily-crt" name="againstDailyCrt">
+                    <option value="">Choose</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="against-daily-structure">Against Daily structure?</label>
+                  <select id="against-daily-structure" name="againstDailyStructure">
+                    <option value="">Choose</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="comparison-card">
+              <h3>Weekly context</h3>
+              <div class="comparison-fields">
+                <div class="field">
+                  <label for="against-weekly-crt">Against Weekly CRT?</label>
+                  <select id="against-weekly-crt" name="againstWeeklyCrt">
+                    <option value="">Choose</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="against-weekly-structure">Against Weekly structure?</label>
+                  <select id="against-weekly-structure" name="againstWeeklyStructure">
+                    <option value="">Choose</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="notes-field">
@@ -209,8 +287,8 @@
           <textarea id="notes" name="notes" placeholder="What did you notice?"></textarea>
         </div>
         <div class="form-footer">
-          <div class="hint">A backtest journal only — no live orders or broker connection.</div>
-          <button class="button primary" type="submit">Save backtest</button>
+          <div class="hint">Entries are saved only in this browser.</div>
+          <button class="button primary" type="submit">Save strategy entry</button>
         </div>
       </form>
     </section>
@@ -218,47 +296,29 @@
     <section class="analytics" aria-labelledby="analytics-title">
       <div class="section-heading">
         <div>
-          <h2 id="analytics-title">Backtest analytics</h2>
-          <p>Metrics use entries with recorded R:R. Breakeven and unrecorded results break a streak.</p>
+          <h2 id="analytics-title">Strategy summary</h2>
+          <p>Win rate includes taken entries with a recorded win or loss.</p>
         </div>
       </div>
       <div class="metric-grid" id="metric-grid" aria-live="polite"></div>
       <div class="section-heading">
         <div>
-          <h2>R:R outcome breakdown</h2>
-          <p>Frequency counts backtests in each outcome; average is the mean R multiple for that group.</p>
+          <h2>Results by setup timeframe</h2>
+          <p>Missed or unrecorded outcomes are excluded from win rate.</p>
         </div>
       </div>
       <div class="panel analytics-panel table-wrap">
         <table class="analytics-table">
           <thead>
             <tr>
-              <th>Outcome</th>
-              <th>Frequency</th>
-              <th>Average R:R</th>
+              <th>Setup timeframe</th>
+              <th>Entries</th>
+              <th>Wins</th>
+              <th>Losses</th>
+              <th>Win rate</th>
             </tr>
           </thead>
-          <tbody id="outcome-analytics"></tbody>
-        </table>
-      </div>
-      <div class="section-heading">
-        <div>
-          <h2>Key-level comparison</h2>
-          <p>Counts unique backtests where that level was hit. Average R is based on those with a recorded R:R.</p>
-        </div>
-      </div>
-      <div class="panel analytics-panel table-wrap">
-        <table class="analytics-table">
-          <thead>
-            <tr>
-              <th>Key level used</th>
-              <th>Frequency</th>
-              <th>Share of backtests</th>
-              <th>Average R:R</th>
-              <th>R:R sample size</th>
-            </tr>
-          </thead>
-          <tbody id="level-analytics"></tbody>
+          <tbody id="timeframe-analytics"></tbody>
         </table>
       </div>
     </section>
@@ -266,7 +326,7 @@
     <section class="history" aria-labelledby="history-title">
       <div class="section-heading">
         <div>
-          <h2 id="history-title">Past backtests</h2>
+          <h2 id="history-title">Saved strategy entries</h2>
           <p>Your saved entries on this device.</p>
         </div>
         <div class="history-actions">
@@ -281,74 +341,55 @@
 
   <script>
     (() => {
-      const STORAGE_KEY = "fieldnotes-backtests-v1";
-      const timeframes = ["Weekly", "Daily", "4H", "1H", "15M"];
-      const entryTimeframes = new Set(["1H", "15M"]);
-      const columns = [
-        { key: "direction", label: "Direction", options: ["Neutral", "Bullish", "Bearish"] },
-        { key: "phase", label: "Phase", options: ["Continuation After Breakout", "Reversal", "Range", "Other"] },
-        { key: "swept", label: "Swept liquidity", options: ["—", "Yes", "No"] },
-        { key: "liquidityType", label: "Liquidity type", options: ["—", "BSL", "SSL", "Equal highs", "Equal lows", "Other"] },
-        { key: "closedInside", label: "Closed back inside the candle range", options: ["—", "Yes", "No"] },
-        { key: "keyLevelHit", label: "Key level hit", options: ["—", "Yes", "No"] },
-        { key: "keyLevelType", label: "Key-level type", options: ["Other", "—", "Support / resistance", "High / low", "Order block", "Fair value gap"] },
-        { key: "structureAligned", label: "Structure aligned", options: ["—", "Yes", "No"] },
-        { key: "entered", label: "Entered here", options: ["—", "Off", "On"] }
-      ];
-      const rows = document.querySelector("#timeframe-rows");
+      const STORAGE_KEY = "fieldnotes-crt-strategy-v1";
       const form = document.querySelector("#journal-form");
       const historyList = document.querySelector("#history-list");
       const metricGrid = document.querySelector("#metric-grid");
-      const outcomeAnalytics = document.querySelector("#outcome-analytics");
-      const levelAnalytics = document.querySelector("#level-analytics");
+      const timeframeAnalytics = document.querySelector("#timeframe-analytics");
       const toast = document.querySelector("#toast");
+      const setupTimeframe = document.querySelector("#setup-timeframe");
+      const entryStatus = document.querySelector("#entry-status");
+      const result = document.querySelector("#result");
+      const dailyContext = document.querySelector("#daily-context");
+      const dailyFields = [document.querySelector("#against-daily-crt"), document.querySelector("#against-daily-structure")];
+      const weeklyFields = [document.querySelector("#against-weekly-crt"), document.querySelector("#against-weekly-structure")];
 
-      function makeSelect(timeframe, column) {
-        const select = document.createElement("select");
-        select.setAttribute("aria-label", `${timeframe}: ${column.label}`);
-        select.dataset.field = column.key;
-        if (column.key === "entered" && !entryTimeframes.has(timeframe)) select.disabled = true;
-        column.options.forEach((value) => {
-          const option = document.createElement("option");
-          option.value = value;
-          option.textContent = value;
-          select.append(option);
-        });
-        if (column.key === "direction") select.value = "Neutral";
-        if (column.key === "phase") select.value = "Continuation After Breakout";
-        if (column.key === "keyLevelType") select.value = "Other";
-        if (column.key === "entered") select.value = entryTimeframes.has(timeframe) ? (timeframe === "1H" ? "Off" : "On") : "—";
-        if (["swept", "liquidityType", "closedInside", "keyLevelHit", "structureAligned"].includes(column.key)) select.value = "—";
-        return select;
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(() => toast.classList.remove("show"), 2600);
       }
 
-      timeframes.forEach((timeframe) => {
-        const row = document.createElement("tr");
-        if (entryTimeframes.has(timeframe)) row.className = "entry-row";
-        const timeframeCell = document.createElement("td");
-        timeframeCell.className = "timeframe";
-        timeframeCell.textContent = timeframe;
-        if (entryTimeframes.has(timeframe)) {
-          const marker = document.createElement("small");
-          marker.textContent = "Entry";
-          timeframeCell.append(marker);
-        }
-        row.append(timeframeCell);
-        columns.forEach((column) => {
-          const cell = document.createElement("td");
-          const select = makeSelect(timeframe, column);
-          if (["swept", "closedInside", "keyLevelHit", "structureAligned", "entered"].includes(column.key)) select.classList.add("short-select");
-          cell.append(select);
-          row.append(cell);
+      function todayLocal() {
+        const now = new Date();
+        const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+        return localDate.toISOString().slice(0, 10);
+      }
+
+      function updateContextFields() {
+        const isDailySetup = setupTimeframe.value === "Daily";
+        dailyContext.hidden = isDailySetup;
+        dailyFields.forEach((field) => {
+          field.required = !isDailySetup;
+          if (isDailySetup) field.value = "";
         });
-        rows.append(row);
-      });
+        weeklyFields.forEach((field) => { field.required = true; });
+      }
+
+      function updateOutcomeField() {
+        const missed = entryStatus.value === "Missed";
+        result.disabled = missed;
+        if (missed) result.value = "";
+        document.querySelector("#outcome-hint").textContent = missed
+          ? "This was a previously selected setup; no trade outcome applies."
+          : "Leave as not recorded if the result is not known yet.";
+      }
 
       function readEntries() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved === null) return [];
         const entries = JSON.parse(saved);
-        if (!Array.isArray(entries)) throw new Error("Saved backtest data is not a list.");
+        if (!Array.isArray(entries)) throw new Error("Saved strategy data is not a list.");
         return entries;
       }
 
@@ -357,73 +398,28 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
           return true;
         } catch (error) {
-          console.error("Could not save backtest entries.", error);
+          console.error("Could not save strategy entries.", error);
           showToast("Could not save. Check browser storage settings.");
           return false;
         }
       }
 
       function escapeHtml(value) {
-        return String(value).replace(/[&<>"']/g, (character) => ({
+        return String(value ?? "").replace(/[&<>"']/g, (character) => ({
           "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
         })[character]);
       }
 
-      function getRecordedR(entry) {
-        if (entry.rMultiple === null || entry.rMultiple === undefined || entry.rMultiple === "") return null;
-        const value = Number(entry.rMultiple);
-        return Number.isFinite(value) ? value : null;
-      }
-
-      function formatR(value) {
-        if (value === null || value === undefined) return "—";
-        const prefix = value > 0 ? "+" : "";
-        return `${prefix}${Number(value.toFixed(2))}R`;
-      }
-
       function renderAnalytics(entries) {
-        const recorded = entries.map((entry) => ({ entry, r: getRecordedR(entry) })).filter((item) => item.r !== null);
-        const totalR = recorded.reduce((sum, item) => sum + item.r, 0);
-        const averageR = recorded.length ? totalR / recorded.length : null;
-        const wins = recorded.filter((item) => item.r > 0).length;
-        const losses = recorded.filter((item) => item.r < 0).length;
-        const breakeven = recorded.length - wins - losses;
-        const winRate = recorded.length ? (wins / recorded.length) * 100 : null;
-        const grossProfit = recorded.reduce((sum, item) => sum + Math.max(item.r, 0), 0);
-        const grossLoss = recorded.reduce((sum, item) => sum + Math.abs(Math.min(item.r, 0)), 0);
-        const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : (grossProfit > 0 ? "∞" : "—");
-
-        const chronological = [...entries]
-          .filter((entry) => getRecordedR(entry) !== null)
-          .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
-        let currentSign = 0;
-        let currentLength = 0;
-        let longestWin = 0;
-        let longestLoss = 0;
-        chronological.forEach((entry) => {
-          const r = getRecordedR(entry);
-          const sign = Math.sign(r);
-          if (sign === 0) {
-            currentSign = 0;
-            currentLength = 0;
-          } else if (sign === currentSign) {
-            currentLength += 1;
-          } else {
-            currentSign = sign;
-            currentLength = 1;
-          }
-          if (sign > 0) longestWin = Math.max(longestWin, currentLength);
-          if (sign < 0) longestLoss = Math.max(longestLoss, currentLength);
-        });
-        const currentStreak = currentSign === 0 ? "—" : `${currentLength} ${currentSign > 0 ? (currentLength === 1 ? "win" : "wins") : (currentLength === 1 ? "loss" : "losses")}`;
-
+        const taken = entries.filter((entry) => entry.entryStatus === "Taken");
+        const recorded = taken.filter((entry) => entry.result === "Win" || entry.result === "Loss");
+        const wins = recorded.filter((entry) => entry.result === "Win").length;
+        const losses = recorded.length - wins;
         const metrics = [
-          { label: "Backtests logged", value: entries.length, detail: "Total saved setups" },
-          { label: "Win frequency", value: winRate === null ? "—" : `${winRate.toFixed(1)}%`, detail: `${wins} wins out of ${recorded.length} with R:R · ${losses} losses · ${breakeven} breakeven` },
-          { label: "Average R:R", value: formatR(averageR), detail: `${recorded.length} backtests with a recorded R multiple` },
-          { label: "Profit factor", value: profitFactor, detail: `${formatR(grossProfit)} gross profit ÷ ${formatR(-grossLoss)} gross loss` },
-          { label: "Current streak", value: currentStreak, detail: "By backtest date; breakeven breaks the streak" },
-          { label: "Longest streak", value: `${longestWin}W / ${longestLoss}L`, detail: "Longest consecutive wins / losses by date" }
+          { label: "Setups logged", value: entries.length, detail: "All saved 4H and Daily setups" },
+          { label: "Win rate", value: recorded.length ? `${((wins / recorded.length) * 100).toFixed(1)}%` : "—", detail: `${wins} wins and ${losses} losses from ${recorded.length} recorded trades` },
+          { label: "Entries taken", value: taken.length, detail: "Includes outcomes not yet recorded" },
+          { label: "Missed setups", value: entries.length - taken.length, detail: "Previously selected, but not entered" }
         ];
         metricGrid.replaceChildren();
         metrics.forEach((metric) => {
@@ -433,65 +429,28 @@
           metricGrid.append(card);
         });
 
-        const outcomeGroups = [
-          { label: "Win (> 0R)", values: recorded.filter((item) => item.r > 0).map((item) => item.r) },
-          { label: "Breakeven (0R)", values: recorded.filter((item) => item.r === 0).map((item) => item.r) },
-          { label: "Loss (< 0R)", values: recorded.filter((item) => item.r < 0).map((item) => item.r) }
-        ];
-        outcomeAnalytics.replaceChildren();
-        outcomeGroups.forEach((group) => {
-          const average = group.values.length ? group.values.reduce((sum, value) => sum + value, 0) / group.values.length : null;
+        timeframeAnalytics.replaceChildren();
+        ["4H", "Daily"].forEach((timeframe) => {
+          const group = entries.filter((entry) => entry.setupTimeframe === timeframe);
+          const results = group.filter((entry) => entry.entryStatus === "Taken" && (entry.result === "Win" || entry.result === "Loss"));
+          const timeframeWins = results.filter((entry) => entry.result === "Win").length;
+          const timeframeLosses = results.length - timeframeWins;
           const row = document.createElement("tr");
-          [group.label, group.values.length, formatR(average)].forEach((value) => {
+          [timeframe, group.length, timeframeWins, timeframeLosses, results.length ? `${((timeframeWins / results.length) * 100).toFixed(1)}%` : "—"].forEach((value) => {
             const cell = document.createElement("td");
             cell.textContent = String(value);
             row.append(cell);
           });
-          outcomeAnalytics.append(row);
-        });
-
-        const levels = new Map();
-        entries.forEach((entry) => {
-          const hitLevels = new Set((Array.isArray(entry.timeframes) ? entry.timeframes : [])
-            .filter((timeframe) => timeframe.keyLevelHit === "Yes" && timeframe.keyLevelType && timeframe.keyLevelType !== "—")
-            .map((timeframe) => timeframe.keyLevelType));
-          hitLevels.forEach((level) => {
-            if (!levels.has(level)) levels.set(level, []);
-            levels.get(level).push(getRecordedR(entry));
-          });
-        });
-
-        levelAnalytics.replaceChildren();
-        const sortedLevels = [...levels.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
-        if (!sortedLevels.length) {
-          const row = document.createElement("tr");
-          const cell = document.createElement("td");
-          cell.className = "analytics-empty";
-          cell.colSpan = 5;
-          cell.textContent = "No key levels marked as hit yet.";
-          row.append(cell);
-          levelAnalytics.append(row);
-          return;
-        }
-        sortedLevels.forEach(([level, results]) => {
-          const withR = results.filter((value) => value !== null);
-          const average = withR.length ? withR.reduce((sum, value) => sum + value, 0) / withR.length : null;
-          const row = document.createElement("tr");
-          [level, results.length, entries.length ? `${((results.length / entries.length) * 100).toFixed(1)}%` : "—", formatR(average), withR.length].forEach((value) => {
-            const cell = document.createElement("td");
-            cell.textContent = String(value);
-            row.append(cell);
-          });
-          levelAnalytics.append(row);
+          timeframeAnalytics.append(row);
         });
       }
 
       function renderHistory() {
         let entries;
         try {
-          entries = readEntries().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+          entries = readEntries().sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
         } catch (error) {
-          console.error("Could not read saved backtests.", error);
+          console.error("Could not read saved strategy entries.", error);
           document.querySelector("#entry-count").textContent = "Unavailable";
           historyList.replaceChildren();
           const failure = document.createElement("div");
@@ -508,61 +467,71 @@
         if (!entries.length) {
           const empty = document.createElement("div");
           empty.className = "empty";
-          empty.innerHTML = "<strong>No backtests logged yet</strong>Save your first setup and it will appear here.";
+          empty.innerHTML = "<strong>No strategy entries yet</strong>Save a selected setup and it will appear here.";
           historyList.append(empty);
           return;
         }
         entries.forEach((entry) => {
           const card = document.createElement("article");
           card.className = "history-card";
-          const entered = entry.timeframes.filter((item) => item.entered === "On").map((item) => item.timeframe);
-          const outcome = `${entry.result ? ` · ${escapeHtml(entry.result)}` : ""}${getRecordedR(entry) === null ? "" : ` · ${escapeHtml(formatR(getRecordedR(entry)))}`}`;
+          const status = entry.entryStatus === "Missed" ? "Missed setup" : `Taken${entry.result ? ` - ${entry.result}` : " - outcome not recorded"}`;
+          const dailyContextText = entry.setupTimeframe === "4H"
+            ? `Daily CRT ${entry.againstDailyCrt || "not recorded"} / structure ${entry.againstDailyStructure || "not recorded"}`
+            : "Daily context not applicable";
+          const meta = [
+            `${entry.direction || "Direction not recorded"} - ${status}`,
+            `2nd candle ${entry.candleClose || "not recorded"} - target ${entry.targetBehavior || "not recorded"}`,
+            `Liquidity ${entry.liquidityTaken || "not recorded"}${entry.reactionLevel ? ` - reacted from ${entry.reactionLevel}` : ""}`,
+            dailyContextText,
+            `Weekly CRT ${entry.againstWeeklyCrt || "not recorded"} / structure ${entry.againstWeeklyStructure || "not recorded"}`,
+            entry.notes
+          ].filter(Boolean).join(" | ");
           card.innerHTML = `
             <div class="card-main">
-              <div class="card-title">${escapeHtml(entry.market)} <span class="card-date">${escapeHtml(entry.date)}${outcome}</span>
-                ${entered.map((timeframe) => `<span class="entry-pill">${escapeHtml(timeframe)} entry</span>`).join("")}
+              <div class="card-title">${escapeHtml(entry.market)} <span class="card-date">${escapeHtml(entry.date)} - ${escapeHtml(entry.setupTimeframe)} CRT</span>
+                <span class="entry-pill">${escapeHtml(status)}</span>
               </div>
-              <div class="card-meta">${entry.timeframes.map((item) => `${escapeHtml(item.timeframe)}: ${escapeHtml(item.direction)}`).join(" · ")}${entry.notes ? ` · ${escapeHtml(entry.notes)}` : ""}</div>
+              <div class="card-meta">${escapeHtml(meta)}</div>
             </div>
-            <button class="button danger" type="button" data-delete="${escapeHtml(entry.id)}" aria-label="Delete ${escapeHtml(entry.market)} backtest">Delete</button>`;
+            <button class="button danger" type="button" data-delete="${escapeHtml(entry.id)}" aria-label="Delete ${escapeHtml(entry.market)} strategy entry">Delete</button>`;
           historyList.append(card);
         });
       }
 
-      function showToast(message) {
-        toast.textContent = message;
-        toast.classList.add("show");
-        window.setTimeout(() => toast.classList.remove("show"), 2600);
-      }
-
-      function todayLocal() {
-        const now = new Date();
-        const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-        return localDate.toISOString().slice(0, 10);
-      }
-
-      function collectTimeframes() {
-        return [...rows.querySelectorAll("tr")].map((row, index) => {
-          const values = {};
-          row.querySelectorAll("select").forEach((select) => { values[select.dataset.field] = select.value; });
-          return { timeframe: timeframes[index], ...values };
-        });
-      }
-
-      document.querySelector("#date").value = todayLocal();
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        if (!form.reportValidity()) return;
-        const entry = {
+      function collectEntry() {
+        const missed = entryStatus.value === "Missed";
+        return {
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           market: form.elements.market.value.trim(),
           date: form.elements.date.value,
-          result: form.elements.result.value,
-          rMultiple: form.elements.rMultiple.value === "" ? null : Number(form.elements.rMultiple.value),
+          setupTimeframe: setupTimeframe.value,
+          direction: form.elements.direction.value,
+          entryStatus: entryStatus.value,
+          result: missed ? "" : result.value,
+          candleClose: form.elements.candleClose.value,
+          targetBehavior: form.elements.targetBehavior.value,
+          liquidityTaken: form.elements.liquidityTaken.value,
+          reactionLevel: form.elements.reactionLevel.value.trim(),
+          againstDailyCrt: setupTimeframe.value === "4H" ? form.elements.againstDailyCrt.value : "",
+          againstDailyStructure: setupTimeframe.value === "4H" ? form.elements.againstDailyStructure.value : "",
+          againstWeeklyCrt: form.elements.againstWeeklyCrt.value,
+          againstWeeklyStructure: form.elements.againstWeeklyStructure.value,
           notes: form.elements.notes.value.trim(),
-          createdAt: new Date().toISOString(),
-          timeframes: collectTimeframes()
+          createdAt: new Date().toISOString()
         };
+      }
+
+      function resetForm() {
+        form.reset();
+        document.querySelector("#date").value = todayLocal();
+        updateContextFields();
+        updateOutcomeField();
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const entry = collectEntry();
         if (!entry.market) {
           form.elements.market.focus();
           return;
@@ -571,27 +540,14 @@
         try {
           entries = readEntries();
         } catch (error) {
-          console.error("Could not read saved backtests.", error);
+          console.error("Could not read saved strategy entries.", error);
           showToast("Could not read saved entries. Check browser storage.");
           return;
         }
         if (saveEntries([entry, ...entries])) {
           renderHistory();
-          showToast("Backtest saved on this device.");
-          form.reset();
-          document.querySelector("#date").value = todayLocal();
-          rows.querySelectorAll("tr").forEach((row, index) => {
-            const timeframe = timeframes[index];
-            columns.forEach((column) => {
-              const select = row.querySelector(`[data-field="${column.key}"]`);
-              if (!select) return;
-              if (column.key === "direction") select.value = "Neutral";
-              else if (column.key === "phase") select.value = "Continuation After Breakout";
-              else if (column.key === "keyLevelType") select.value = "Other";
-              else if (column.key === "entered") select.value = entryTimeframes.has(timeframe) ? (timeframe === "1H" ? "Off" : "On") : "—";
-              else select.value = "—";
-            });
-          });
+          showToast("Strategy entry saved on this device.");
+          resetForm();
         }
       });
 
@@ -602,13 +558,13 @@
         try {
           entries = readEntries().filter((entry) => entry.id !== button.dataset.delete);
         } catch (error) {
-          console.error("Could not read saved backtests.", error);
+          console.error("Could not read saved strategy entries.", error);
           showToast("Could not read saved entries. Check browser storage.");
           return;
         }
         if (saveEntries(entries)) {
           renderHistory();
-          showToast("Backtest deleted.");
+          showToast("Strategy entry deleted.");
         }
       });
 
@@ -617,29 +573,36 @@
         try {
           entries = readEntries();
         } catch (error) {
-          console.error("Could not read saved backtests.", error);
+          console.error("Could not read saved strategy entries.", error);
           showToast("Could not read saved entries. Check browser storage.");
           return;
         }
         if (!entries.length) {
-          showToast("Save a backtest before exporting.");
+          showToast("Save a strategy entry before exporting.");
           return;
         }
-        const headers = ["Market", "Date", "Outcome", "R:R result (R multiple)", "Notes", ...timeframes.flatMap((timeframe) => columns.map((column) => `${timeframe} ${column.label}`))];
+        const headers = ["Market", "Date", "Setup CRT timeframe", "Direction", "Entry status", "Outcome", "Second candle close", "Target behavior", "Liquidity taken", "Liquidity / reaction level", "Against Daily CRT", "Against Daily structure", "Against Weekly CRT", "Against Weekly structure", "Notes"];
         const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
         const lines = [headers, ...entries.map((entry) => [
-          entry.market, entry.date, entry.result, entry.rMultiple ?? "", entry.notes,
-          ...entry.timeframes.flatMap((timeframe) => columns.map((column) => timeframe[column.key]))
+          entry.market, entry.date, entry.setupTimeframe, entry.direction, entry.entryStatus, entry.result,
+          entry.candleClose, entry.targetBehavior, entry.liquidityTaken, entry.reactionLevel,
+          entry.againstDailyCrt, entry.againstDailyStructure, entry.againstWeeklyCrt,
+          entry.againstWeeklyStructure, entry.notes
         ])].map((line) => line.map(quote).join(","));
         const blob = new Blob(["\uFEFF", lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = "backtest-journal.csv";
+        link.download = "crt-strategy-journal.csv";
         link.click();
         URL.revokeObjectURL(url);
       });
 
+      setupTimeframe.addEventListener("change", updateContextFields);
+      entryStatus.addEventListener("change", updateOutcomeField);
+      document.querySelector("#date").value = todayLocal();
+      updateContextFields();
+      updateOutcomeField();
       renderHistory();
     })();
   </script>
